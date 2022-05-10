@@ -30,6 +30,8 @@ from fairseq.models import FairseqEncoder, FairseqDecoder, FairseqEncoderDecoder
 ##  See https://arxiv.org/abs/2008.04935 for more details on the generation modification
 ##  See https://arxiv.org/abs/2004.14564 for information about the model we use
 
+## @MeDarina: changed initial file to work on cpu, not gpu
+
 
 def make_subword_penalties(line):
     """
@@ -239,7 +241,7 @@ class NgramDownweightDecoder(FairseqDecoder):
                         xx[ii, -1, word_idx] -= self.args.prism_a * (prefix_len_in_words+1)  ** self.args.prism_b
 
         # Return the logits and ``None`` for the attention weights
-        xx = xx.cuda()
+        xx = xx.cpu()
         return xx, None
 
 
@@ -317,7 +319,7 @@ def main(args):
         if args.fp16:
             model.half()
         if use_cuda:
-            model.cuda()
+            model.cpu()
 
     ngram_downweight_model = NgramDownweightModel.build_model(args, task)  
     models.append(ngram_downweight_model)   # ensemble Prism multilingual NMT model and model to downweight n-grams
@@ -415,6 +417,8 @@ def main(args):
 
                     if not args.quiet:
                         print('H-{}\t{}\t{}'.format(sample_id, hypo['score'], hypo_str))
+                        detokenized = ''.join(hypo_str).replace('<de> ', '').replace(' ', '').replace('▁', ' ')
+                        print('418:', detokenized)
                         print('P-{}\t{}'.format(
                             sample_id,
                             ' '.join(map(
