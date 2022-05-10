@@ -13,6 +13,7 @@ import torch
 from fairseq import checkpoint_utils, utils
 from fairseq.data import LanguagePairDataset
 from sacrebleu import get_source_file, get_reference_files, DATASETS, get_langpairs_for_testset
+## @MeDarina: changed initial file to work on cpu, not gpu
 
 logger = logging.getLogger('prism')
 logger.setLevel(logging.INFO)
@@ -75,7 +76,7 @@ class Prism:
 
         for model in self.models:
             if self.use_cuda:
-                model.cuda()
+                model.cpu()
             model.make_generation_fast_(
                 beamable_mm_beam_size=None,
                 need_attn=False,
@@ -139,11 +140,11 @@ class Prism:
         results = [None, ] * len(tok_sents_in)
         for batch in self._build_batches(tok_sents_in, tok_sents_out, skip_invalid_size_inputs=False):
             if self.use_cuda:  # must be a better way
-                batch['id'] = batch['id'].cuda()
-                batch['net_input']['src_tokens'] = batch['net_input']['src_tokens'].cuda()
-                batch['net_input']['src_lengths'] = batch['net_input']['src_lengths'].cuda()
-                batch['net_input']['prev_output_tokens'] = batch['net_input']['prev_output_tokens'].cuda()
-                batch['target'] = batch['target'].cuda()
+                batch['id'] = batch['id'].cpu()
+                batch['net_input']['src_tokens'] = batch['net_input']['src_tokens'].cpu()
+                batch['net_input']['src_lengths'] = batch['net_input']['src_lengths'].cpu()
+                batch['net_input']['prev_output_tokens'] = batch['net_input']['prev_output_tokens'].cpu()
+                batch['target'] = batch['target'].cpu()
 
             translations = self.task.inference_step(self.generator, self.models, batch)
 
